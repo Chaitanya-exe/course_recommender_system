@@ -11,5 +11,4 @@ wheels/
 
 # Jupyter notebooks
 notebooks/
-*.ipynb
 dataset/
