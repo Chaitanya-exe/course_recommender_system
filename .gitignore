@@ -12,3 +12,4 @@ wheels/
 # Jupyter notebooks
 notebooks/
 dataset/
+recommender_system/scraper
