@@ -1,2 +1,2 @@
-from .dataset_classes import DatasetRow, EligibilityStruct
-__all__ = ["DataseRow"]
+from .dataset_classes import DatasetRow, EligibilityStruct, StudentProfile
+__all__ = ["DatasetRow", "StudentProfile"]
