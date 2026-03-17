@@ -11,7 +11,7 @@ class EligibilityRule:
         }                            
     
     def _check_degree(self, student, course) -> bool:
-        return self.degree_order[student.degree_level] >= self.degree_order[course["min_degree_level"]]
+        return self.degree_order[student.degree_level] == self.degree_order[course["min_degree_level"]]
     
     def _check_marks(self, student, course) -> bool:
 

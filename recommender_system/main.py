@@ -1,6 +1,7 @@
 from eligibility_pipeline import EligibilityRule
 import pandas as pd
 import re
+from vectorizer import TFIDFVector, calculate_similarity
 
 def parse_eligibility_struct(text):
     degree = re.search(r"min_degree_level='(.*?)'", text)
@@ -17,24 +18,36 @@ def main():
     students_df = pd.read_csv("recommender_system/students_data.csv")
     courses_df = pd.read_csv("recommender_system/final_data3.csv")
     eligibility_pipe = EligibilityRule()
+    tfidf = TFIDFVector()
 
     results = []
 
     for (i, student) in students_df.iterrows():
-        eligible_courses = []
+        eligible_courses_text = []
         for (j, course) in courses_df.iterrows():
             try:
                 result = eligibility_pipe.check_eligibility(student, course)
 
                 if result[0]:
-                    eligible_courses.append(course)
+                    text = f"""{course['program_name']} {course['domain']} {course['description']} {" ".join(course['skills_learned'])} {" ".join(course['career_outcomes'])}"""
+                    eligible_courses_text.append(text)
                 else:
                     continue
             except:
                 print(f"Some problem with this course {course["program_name"]}")
                 continue
+        print(f"Student {i + 1} eligible for {len(eligible_courses_text)} courses.")
+        student_text = f"""{student['academic_background']} {student['subjects']} {student['preferred_skills']} {student['preferred_domain']} {student['career_goal']} {student['interests']}"""
+        tfidf.fit(eligible_courses_text)
+        course_matrix = tfidf.transform(eligible_courses_text)
+        student_vector = tfidf.transform(student_text)
+
+        scores = calculate_similarity(student_vector=[student_vector], courses_matrix=course_matrix)
         
-        print(f"Student {i + 1} eligible for {len(eligible_courses)} courses.")
+        print(course_matrix.shape)
+
+        
+        
 
 if __name__ == "__main__":
     try:
