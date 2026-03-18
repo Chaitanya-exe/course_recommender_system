@@ -39,4 +39,4 @@ class EmbeddingVector:
         return data["embedding"]
     
 def calculate_similarity(student_vector, courses_matrix) -> list[float]:
-    return cosine_similarity(student_vector, courses_matrix.T)
+    return cosine_similarity(student_vector, courses_matrix).flatten()
