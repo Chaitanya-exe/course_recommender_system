@@ -13,7 +13,7 @@ wheels/
 notebooks/
 dataset/
 recommender_system/scraper
-
+.env 
 # datasets and data files
 *.txt
 *.csv

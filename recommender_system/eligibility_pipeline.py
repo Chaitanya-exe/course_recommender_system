@@ -27,10 +27,15 @@ class EligibilityRule:
             return True
         return student.percentage >= general_marks
     
+    def _check_domain(self, student, course):
+        pass
+    
     def check_eligibility(self, student, course):
         if not self._check_degree(student, course):
             return False, "degree not eligible"
         if not self._check_marks(student, course):
             return False, "marks not eligible"
+        if not self._check_domain(student, course):
+            return False, "subjects not eligible"
         
         return True, "Eligible"
