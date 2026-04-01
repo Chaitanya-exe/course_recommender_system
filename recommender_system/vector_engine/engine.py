@@ -74,7 +74,6 @@ class HybridEngine(VectorEngine):
 
     def fit(self, corpus):
         self.tfidf.fit(corpus)
-        self.embedder.fit(corpus)
     
     def transform(self, texts):
         return {
