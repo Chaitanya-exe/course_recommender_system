@@ -78,7 +78,7 @@ def embedding_test():
                 print(f"Some problem with this course {course["program_name"]}")
                 continue
         eligible_courses_text = [f"""{course['program_name']} {course['domain']} {course['description']} {" ".join(get_string_from_array(course['skills_learned']))} {" ".join(get_string_from_array(course['career_outcomes']))}""" for course in eligible_courses]
-
+        
         print(f"Student {i + 1} eligible for {len(eligible_courses_text)} courses.")
         engine.fit(corpus=eligible_courses_text)
         student_text = f"""{student['academic_background']} {" ".join(get_string_from_array(student['subjects']))} {" ".join(get_string_from_array(student['preferred_skills']))} {student['preferred_domain']} {student['career_goal']} {" ".join(get_string_from_array(student['interests']))}"""
@@ -128,10 +128,10 @@ def hybrid_test():
         print(f"Student {i + 1} eligible for {len(eligible_courses_text)} courses.")
         engine.fit(corpus=eligible_courses_text)
         student_text = f"""{student['academic_background']} {" ".join(get_string_from_array(student['subjects']))} {" ".join(get_string_from_array(student['preferred_skills']))} {student['preferred_domain']} {student['career_goal']} {" ".join(get_string_from_array(student['interests']))}"""
-
+        course_matrix = engine.transform(eligible_courses_text)
         student_vector = engine.transform([student_text])
 
-        scores = engine.similarity(query_vec=student_vector)
+        scores = engine.similarity(query_vec=student_vector, matrix=course_matrix)
         top_indices = np.argsort(scores)[::-1][:5]
         recommended_courses = [eligible_courses[i] for i in top_indices]
         final_scores = [scores[i] for i in top_indices]
