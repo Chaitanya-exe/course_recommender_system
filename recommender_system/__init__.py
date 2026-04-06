@@ -1,2 +1,2 @@
-from .eligibility_pipeline import StudentProfile
-__all__ = ["StudentProfile"]
+from .eligibility_pipeline import EligibilityRule
+__all__ = ["EligibilityRule"]
