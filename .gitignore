@@ -18,3 +18,4 @@ recommender_system/scraper
 *.txt
 *.csv
 *.json
+*.db

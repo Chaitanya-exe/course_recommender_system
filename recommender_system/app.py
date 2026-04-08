@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 from concurrent.futures import ThreadPoolExecutor
+from db.service import save_result
 
 @st.cache_data
 def load_data():
@@ -14,6 +15,12 @@ courses_df = load_data()
 
 if "results" not in st.session_state:
     st.session_state.results = None
+
+@st.cache_resource
+def save_to_db(student, data, feedback, method):
+    courses, scores = data
+
+    save_result(student=student, scores=scores, courses=courses, feedback=feedback, method=method)
 
 @st.cache_resource
 def init_engines(corpus):
@@ -58,9 +65,7 @@ student = {
 
 def recommendations_worker(engine: VectorEngine, student, courses_df):
     eligible_courses = []
-    print(student)
     for (i, course) in courses_df.iterrows():
-        print("executing eligibility loop")
         try:
             ok, reason = eligibility.check_eligibility(student=student, course=course)
             if ok:
@@ -108,7 +113,6 @@ if st.session_state.results:
         with col:
             st.write(title)
             for c, s in zip(courses, scores):
-                print(f"{c['program_name']} ({round(s, 3)})")
                 st.write(f"{c['program_name']} ({round(s, 3)})")
             
             feedback = st.radio(f"{title} feedback", ["Bad", "Moderate", "good"])
@@ -123,5 +127,7 @@ if st.session_state.results:
 if st.button("Submit Feedback"):
     st.write("Your feedback")
     st.write([tfidf_feedback, embed_feedback, hybrid_feedback])
+    save_to_db(student=student, data=st.session_state.results['tfidf'], feedback=tfidf_feedback, method="tfidf")
+    save_to_db(student=student, data=st.session_state.results['embed'], feedback=tfidf_feedback, method="embed")
+    save_to_db(student=student, data=st.session_state.results['hybrid'], feedback=tfidf_feedback, method="hybrid")
     st.success("Feedback Submitted")
-    pass
