@@ -13,21 +13,21 @@ class EligibilityRule:
         }  
     
     def _check_degree(self, student, course) -> bool:
-        return self.degree_order[student.degree_level] == self.degree_order[course["min_degree_level"]]
+        return self.degree_order[student['degree_level']] == self.degree_order[course["min_degree_level"]]
     
     def _check_marks(self, student, course) -> bool:
 
         reserved_marks = course["min_marks_reserved"]
         general_marks = course["min_marks_general"]
 
-        if student.is_reserved:
+        if student['is_reserved']:
             if pd.isna(reserved_marks):
                 return True
-            return student.percentage >= reserved_marks
+            return student['percentage'] >= reserved_marks
 
         if pd.isna(general_marks):
             return True
-        return student.percentage >= general_marks
+        return student['percentage'] >= general_marks
     
     def _check_domain(self, student, course):
         pass
