@@ -1,11 +1,13 @@
 from eligibility_pipeline import EligibilityRule
-from utils.utility import get_string_from_array, Finaliser
+from utils.utility import get_string_from_array
 from vector_engine import TFIDFEngine, EmbeddingEngine, HybridEngine, VectorEngine
 import pandas as pd
 import numpy as np
 import streamlit as st
 from concurrent.futures import ThreadPoolExecutor
-from db.service import save_result
+import sqlite3
+import json
+from datetime import datetime
 
 @st.cache_data
 def load_data():
@@ -16,11 +18,48 @@ courses_df = load_data()
 if "results" not in st.session_state:
     st.session_state.results = None
 
+
+@st.cache_resource
+def get_db():
+    conn = sqlite3.connect('experiment.db', check_same_thread=False)
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS recommendation_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT,
+        student_profile TEXT,
+        method TEXT,
+        recommended_courses TEXT,
+        scores TEXT,
+        feedback TEXT
+    )
+    """)
+
+    conn.commit()
+    return conn
+
 @st.cache_resource
 def save_to_db(student, data, feedback, method):
     courses, scores = data
+    conn = get_db()
+    cursor = conn.cursor()
 
-    save_result(student=student, scores=scores, courses=courses, feedback=feedback, method=method)
+    cursor.execute("""
+        INSERT INTO recommendation_logs
+        (timestamp, student_profile, method, recommended_courses, scores, feedback)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        datetime.now().isoformat(),
+        json.dumps(student),
+        method,
+        json.dumps([c['program_name'] for c in courses]),
+        json.dumps(scores),
+        feedback
+    ))
+    conn.commit()
+    
 
 @st.cache_resource
 def init_engines(corpus):
