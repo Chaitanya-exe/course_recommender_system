@@ -16,6 +16,5 @@ recommender_system/scraper
 .env 
 # datasets and data files
 *.txt
-*.csv
 *.json
 *.db

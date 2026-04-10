@@ -65,7 +65,7 @@ def save_to_db(student, data, feedback, method):
 def init_engines(corpus):
     tfidf_engine = TFIDFEngine()
     embed_engine = EmbeddingEngine()
-    hybrid_engine = HybridEngine(tfidf=tfidf_engine, embedder=embed_engine)
+    hybrid_engine = HybridEngine(tfidf=tfidf_engine, embedder=embed_engine, alpha=0.3)
     tfidf_engine.fit(corpus)
     embed_engine.fit(corpus)
     return tfidf_engine, embed_engine, hybrid_engine
@@ -161,7 +161,6 @@ if st.session_state.results:
     tfidf_feedback = display(col1, "TF-IDF results", st.session_state.results["tfidf"])
     embed_feedback = display(col2, "Embedding results", st.session_state.results["embed"])
     hybrid_feedback = display(col3, "Hybrid results", st.session_state.results["hybrid"])
-
 
 if st.button("Submit Feedback"):
     st.write("Your feedback")
