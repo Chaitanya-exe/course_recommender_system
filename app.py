@@ -11,7 +11,7 @@ from datetime import datetime
 
 @st.cache_data
 def load_data():
-    return pd.read_csv("recommender_system/final_data3.csv")
+    return pd.read_csv("restructure_pipeline/fixed_data.csv")
 
 courses_df = load_data()
 
