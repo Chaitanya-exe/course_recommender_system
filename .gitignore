@@ -14,7 +14,13 @@ notebooks/
 dataset/
 recommender_system/scraper
 .env 
+
 # datasets and data files
 *.txt
 *.json
 *.db
+
+# data cleaning scripts
+restructure_pipeline/
+# research papers
+related_research_papers/

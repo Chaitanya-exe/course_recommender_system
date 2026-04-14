@@ -1,6 +1,6 @@
-from eligibility_pipeline import EligibilityRule
-from utils.utility import get_string_from_array
-from vector_engine import TFIDFEngine, EmbeddingEngine, HybridEngine, VectorEngine
+from recommender_system.eligibility_pipeline import EligibilityRule
+from recommender_system.utils.utility import get_string_from_array
+from recommender_system.vector_engine import TFIDFEngine, EmbeddingEngine, HybridEngine, VectorEngine
 import pandas as pd
 import numpy as np
 import streamlit as st
@@ -89,6 +89,8 @@ interests = st.multiselect("Enter keywords that best describes your interests", 
 career_goal = st.text_input("In a short sentence, tell us your career goal")
 preferred_skills = st.multiselect("Enter some of the skills that you would like to learn in future.", [], accept_new_options=True)
 preferred_domain = st.multiselect("Preferred Domain", ["Engineering", "Science", "Management", "Commerce", "Humanities"], max_selections=1, accept_new_options=True)
+preferred_mode = st.multiselect("Preferred mode of Studying", ["Regular", "Distance Learning", "Part Time"], accept_new_options=False) 
+preferred_duration = st.multiselect("Preferred duraiton of the course", [], placeholder="enter your preferred duration. 2 year, 4 year, few months etc...")
 
 student = {
     "academic_background": academic_background,
@@ -99,7 +101,9 @@ student = {
     "interests": interests,
     "career_goal": career_goal,
     "preferred_skills": preferred_skills,
-    "preferred_domain": preferred_domain
+    "preferred_domain": preferred_domain,
+    "preferred_mode": preferred_mode,
+    "preferred_duration": preferred_duration
 }
 
 def recommendations_worker(engine: VectorEngine, student, courses_df):
@@ -119,7 +123,7 @@ def recommendations_worker(engine: VectorEngine, student, courses_df):
         return [], []
 
     eligible_courses_text = [f"""{course['program_name']} {course['domain']} {course['description']} {" ".join(get_string_from_array(course['skills_learned']))} {" ".join(get_string_from_array(course['career_outcomes']))}""" for course in eligible_courses]
-    student_text = f"""{student['academic_background']} {" ".join(student['subjects'])} {" ".join(student['preferred_skills'])} {student['preferred_domain']} {student['career_goal']} {" ".join(student['interests'])}"""
+    student_text = f"""{student['academic_background']} {" ".join(student['subjects'])} {" ".join(student['preferred_skills'])} {student['preferred_domain']} {student['career_goal']} {" ".join(student['interests'])} {" ".join(student['preferred_mode'])} {" ".join(student['preferred_duration'])}"""
     course_matrix = engine.transform(eligible_courses_text)
     student_vector = engine.transform([student_text])
 
