@@ -90,7 +90,7 @@ career_goal = st.text_input("In a short sentence, tell us your career goal")
 preferred_skills = st.multiselect("Enter some of the skills that you would like to learn in future.", [], accept_new_options=True)
 preferred_domain = st.multiselect("Preferred Domain", ["Engineering", "Science", "Management", "Commerce", "Humanities"], max_selections=1, accept_new_options=True)
 preferred_mode = st.multiselect("Preferred mode of Studying", ["Regular", "Distance Learning", "Part Time"], accept_new_options=False) 
-preferred_duration = st.multiselect("Preferred duraiton of the course", [], placeholder="enter your preferred duration. 2 year, 4 year, few months etc...")
+preferred_duration = st.multiselect("Preferred duraiton of the course", [], placeholder="enter your preferred duration. 2 year, 4 year, few months etc...", accept_new_options=True)
 
 student = {
     "academic_background": academic_background,
@@ -156,7 +156,7 @@ if st.session_state.results:
         with col:
             st.write(title)
             for c, s in zip(courses, scores):
-                st.write(f"{c['program_name']} ({round(s, 3)})")
+                st.write(f"{c['program_name']} {c['duration']} {c['mode']} ({round(s, 3)})")
             
             feedback = st.radio(f"{title} feedback", ["Bad", "Moderate", "good"])
         
