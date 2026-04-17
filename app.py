@@ -158,7 +158,7 @@ if st.session_state.results:
             for c, s in zip(courses, scores):
                 st.write(f"{c['program_name']} {c['duration']} {c['mode']} ({round(s, 3)})")
             
-            feedback = st.radio(f"{title} feedback", ["Bad", "Moderate", "good"])
+            feedback = st.radio(f"{title} feedback", ["good", "Moderate", "Bad"])
         
         return feedback
 

@@ -67,7 +67,7 @@ class EmbeddingEngine(VectorEngine):
 
 class HybridEngine(VectorEngine):
     
-    def __init__(self, tfidf: TFIDFEngine, embedder: EmbeddingEngine, alpha=0.7):
+    def __init__(self, tfidf: TFIDFEngine, embedder: EmbeddingEngine, alpha):
         self.tfidf = tfidf
         self.embedder = embedder
         self.alpha = alpha
@@ -85,5 +85,5 @@ class HybridEngine(VectorEngine):
         tfidf_score = self.tfidf.similarity(query_vec['tfidf'], matrix['tfidf'])
         embedding_score = self.embedder.similarity(query_vec['embeddings'], matrix['embeddings'])
 
-        return self.alpha * embedding_score + (1 - self.alpha) * tfidf_score
+        return self.alpha * embedding_score + (1 - self.alpha)  * tfidf_score
 
