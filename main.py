@@ -49,9 +49,13 @@ def recommendations_worker(engine: VectorEngine, student, courses_df):
     top_indices = np.argsort(scores)[::-1][:5]
     recommended_courses = [eligible_courses[i] for i in top_indices]
     final_scores = [scores[i] for i in top_indices]
-    return recommended_courses, final_scores
+    return final_scores, recommended_courses
 
-for student in students_df.iterrows():
+
+
+def main():
+    results = []
+    for i, student in students_df.iterrows():
         scores = {}
         with ThreadPoolExecutor(max_workers=3, ) as executor:
             futures = {
@@ -63,6 +67,19 @@ for student in students_df.iterrows():
 
             for key, value in futures.items():
                 scores[key] = value
+                
+        for key, value in scores.items():
+            for c, s in zip(value):
+                record = {
+
+                }
+
+        
+
+if __name__ == '__main__':
+    main()
+
+        
 
         
            
