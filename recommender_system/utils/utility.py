@@ -1,7 +1,7 @@
 import ast
 import pandas as pd
 
-def get_string_from_array(input: list[any]):
+def get_string_from_array(input: str) -> list[any]:
     return ast.literal_eval(input)
 
 class Finaliser:
