@@ -9,11 +9,46 @@ import json
 dataset_path = "dataset/students_data.json"
 courses_df = pd.read_csv("dataset/courses_data.csv")
 
-if "progress" not in st.session_state:
-    st.session_state.progress = 0
-
 if "recommendations" not in st.session_state:
     st.session_state.recommendations = None
+
+def save_progress(
+        conn,
+        counter:int
+):
+
+    cursor=conn.cursor()
+
+    cursor.execute(
+    """
+    UPDATE progress
+    SET counter=?
+    WHERE id=1
+    """,
+    (counter,)
+    )
+
+    conn.commit()
+    
+def load_progress(conn):
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT counter
+    FROM progress
+    WHERE id=1
+    """)
+
+    result = cursor.fetchone()
+
+    if result:
+        return result[0]
+
+    return 0
+
+if "progress" not in st.session_state:
+    st.session_state.progress = load_progress()
 
 @st.cache_data
 def load_students():
@@ -22,6 +57,12 @@ def load_students():
         return pd.DataFrame(students)
     
 students_df = load_students()
+
+labels = {
+    "Good": 2,
+    "Moderate": 1,
+    "Bad": 0
+}
 
 @st.cache_resource
 def get_db():
@@ -76,8 +117,197 @@ def get_db():
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS progress (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        counter INTEGER
+    )
+    """)
+
+    cursor.execute("""
+    INSERT OR IGNORE INTO progress(id, counter)
+    VALUES(1,0)
+    """)
+
     conn.commit()
     return conn
+
+def save_results(
+        conn: sqlite3.Connection,
+        student_id: int,
+        student,
+        recommendations
+):
+
+    cursor = conn.cursor()
+
+    for rec in recommendations:
+
+        cursor.execute(
+        """
+        SELECT id
+        FROM dataset
+        WHERE student_id=?
+        AND program_name=?
+        """,
+        (
+            student_id,
+            rec["program_name"]
+        )
+        )
+
+        existing=cursor.fetchone()
+
+        if existing:
+            continue
+
+        cursor.execute(
+        """
+        INSERT INTO dataset(
+
+        student_id,
+
+        degree_level,
+        percentage,
+        is_reserved,
+
+        academic_background,
+
+        subjects,
+        interests,
+        career_goal,
+        preferred_skills,
+
+        preferred_domain,
+        preferred_duration,
+        preferred_mode,
+
+        program_name,
+        program_level,
+        domain,
+        duration,
+        mode,
+        description,
+
+        skills_learned,
+        career_outcomes,
+
+        eligibility,
+
+        required_subjects,
+
+        min_degree_level,
+
+        min_marks_general,
+        min_marks_reserved,
+
+        similarity_score,
+
+        domain_match,
+        subject_required,
+        subject_overlap,
+
+        marks_required,
+        marks_margin,
+
+        skill_relevance_percentage,
+        career_alignment_percentage,
+
+        label
+
+        )
+
+        VALUES(
+
+        ?,?,?,?,?,?,
+        ?,?,?,?,?,?,
+        ?,?,?,?,?,?,
+        ?,?,?,?,?,?,
+        ?,?,?,?,?,?,
+        ?,?,?,?,?
+
+        )
+        """,
+
+        (
+
+        student_id,
+
+        student["degree_level"],
+        float(student["percentage"]),
+        int(student["is_reserved"]),
+
+        student["academic_background"],
+
+        json.dumps(
+            student["subjects"]
+        ),
+
+        json.dumps(
+            student["interests"]
+        ),
+
+        student["career_goal"],
+
+        json.dumps(
+            student["preferred_skills"]
+        ),
+
+        student["preferred_domain"],
+        student["preferred_duration"],
+        student["preferred_mode"],
+
+        rec["program_name"],
+        rec["program_level"],
+        rec["domain"],
+        rec["duration"],
+        rec["mode"],
+        rec["description"],
+
+        json.dumps(
+            rec["skills_learned"]
+        ),
+
+        json.dumps(
+            rec["career_outcomes"]
+        ),
+
+        rec["eligibility"],
+
+        json.dumps(
+            rec["required_subjects"]
+        ),
+
+        rec["min_degree_level"],
+
+        rec["min_marks_general"],
+        rec["min_marks_reserved"],
+
+        float(rec["score"]),
+
+        int(rec["domain_match"]),
+        int(rec["subject_required"]),
+        int(rec["subject_overlap"]),
+
+        int(rec["marks_required"]),
+
+        float(rec["marks_margin"]),
+
+        float(
+            rec["skill_relevance_percentage"]
+        ),
+
+        float(
+            rec["career_alignment_percentage"]
+        ),
+
+        int(rec["label"])
+
+        )
+        )
+
+    conn.commit()
+
 
 @st.cache_resource
 def init_engine(corpus):
@@ -124,18 +354,12 @@ def extract_features(student, courses, hybrid):
 
         domain_match = int(c['domain'] == student['preferred_domain'])
         student_skills = student['preferred_skills']
-        course_skills = c['skills_learned']
+        course_skills = literal_eval(c['skills_learned'])
         skill_relevance_percentage = embed_engine.similarity(embed_engine.transform([" ".join(student_skills)]), embed_engine.transform([" ".join(course_skills)])) * 100
 
         student_vec = embed_engine.transform([student['career_goal']])
-
-        career_alignment_percentage = max(
-            embed_engine.similarity(
-                student_vec,
-                embed_engine.transform([outcome])
-            )
-            for outcome in c['career_outcomes']
-        ) * 100
+        career_outcomes = literal_eval(c['career_outcomes'])
+        career_alignment_percentage = embed_engine.similarity(student_vec, embed_engine.transform([" ".join(career_outcomes)])) * 100
 
         marks_margin = student['percentage'] - (c['min_marks_general'] or c['min_marks_reserved'])
 
@@ -153,82 +377,152 @@ def extract_features(student, courses, hybrid):
     
     return records
         
-
-def build_dataset(students_df, courses_df, engine) -> pd.DataFrame:
-    results = []
-    for i, student in students_df.iterrows():
-        eligible_courses = []
-        for j, course in courses_df.iterrows():
-            try:
-                ok, reason = eligibility.check_eligibility(student=student, course=course)
-                if ok:
-                    eligible_courses.append(course)
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                print("Error occured: ", str(e))
-            
-        records = extract_features(student=student, courses=eligible_courses, hybrid=engine)
-
-        for record in records:
-            results.append({
-                "student_id": i+1,
-                **student,
-                **record,
-                "label": None
-            })
-        print(f"Record processed for student_id: {i+1}")
-    
-    return pd.DataFrame(results)
-
 student = students_df.iloc[st.session_state.progress]
 
 st.header("Data Annotation")
 st.subheader("Course Recommendation system")
 
+st.subheader("Student Profile")
+with st.container():
 
-left, right = st.columns([1, 1])
+    st.markdown("### Profile")
 
-with left:
+    c1,c2=st.columns(2)
 
-    st.subheader("Student Profile")
+    with c1:
 
-    st.write(
-        {
-            "Background":
-            student['academic_background'],
-
-            "Subjects":
-            student['subjects'],
-
-            "Interests":
-            student['interests'],
-
-            "Career":
-            student['career_goal'],
-
-            "Skills":
-            student['preferred_skills'],
-
-            "Domain":
-            student['preferred_domain']
-        }
-    )
-
-with right:
-    st.subheader("recommendations")
-
-    if st.button("Get Recommendations"):
         st.write(
-            {
-                "Recommendations": "some recommendations here"
-            }
+            f"**Background:** {student['academic_background']}"
         )
 
+        st.write(
+            f"**Degree:** {student['degree_level']}"
+        )
+
+        st.write(
+            f"**Percentage:** {student['percentage']}"
+        )
+
+        st.write(
+            f"**Domain:** {student['preferred_domain']}"
+        )
+
+        st.write(
+            f"**Career Goal:** {student['career_goal']}"
+        )
+
+
+    with c2:
+
+        st.write(
+            f"**Subjects:** {', '.join(student['subjects'])}"
+        )
+
+        st.write(
+            f"**Interests:** {', '.join(student['interests'])}"
+        )
+
+        st.write(
+            f"**Skills:** {', '.join(student['preferred_skills'])}"
+        )
+
+        st.write(
+            f"**Mode:** {student['preferred_mode']}"
+        )
+
+        st.write(
+            f"**Duration:** {student['preferred_duration']}"
+        )
+
+if st.button("Get Recommendations"):
+
+    eligible_courses = []
+    
+    for i, course in courses_df.iterrows():
+        try:
+            ok, _ = eligibility.check_eligibility(student=student, course=course)
+            if ok:
+                eligible_courses.append(course)
+            else:
+                continue
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print("Some error occured: ", str(e))
+            continue
+    
+    st.session_state.recommendations = extract_features(student=student, courses=eligible_courses, hybrid=hybrid_engine) 
+
+
+if st.session_state.recommendations is not None:
+    for idx,course in enumerate(
+        st.session_state.recommendations
+    ):
+
+        with st.container():
+
+            st.markdown(
+            f"""
+            ### {course['program_name']}
+
+            **Score:** {round(course['score'],3)}
+
+            **Domain:** {course['domain']}
+
+            **Career Outcomes:** {course['career_outcomes']}
+
+            **Skills learned:** {course['skills_learned']}
+
+            **Career Alignment:** 
+            {round(course['career_alignment_percentage'],1)}%
+            
+            **Skill Relevance:** 
+            {round(course['skill_relevance_percentage'],1)}%
+            
+            **Subject Required:** {course['subject_required']}
+
+            **Subject Overlap:** 
+            {course['subject_overlap']}
+
+            **Domain match: ** {course['domain_match']}
+            
+            **Description**
+            {course['description']}
+            """
+            )
+
+
+            selected=st.selectbox(
+
+                "Recommendation Quality",
+
+                [
+
+                "Good",
+                "Moderate",
+                "Bad"
+
+                ],
+
+                key=f"label_{idx}"
+
+            )
+
+            course["label"]=labels[
+                selected
+            ]
+
+            st.markdown("---")
 
 save_button = st.button("Save to DB")
 
 if save_button:
-    st.success("Saved to DB")
+    save_results(conn=get_db(), student_id=st.session_state.progress, student=student, recommendations=st.session_state.recommendations)
     st.session_state.progress += 1
+    st.session_state.recommendations = None
     st.rerun()
+    st.success("Saved to DB")
+
+if st.button("Store Progress"):
+    save_progress(conn=get_db(), counter=st.session_state.progress)
+    st.success("Progress saved successfully")
