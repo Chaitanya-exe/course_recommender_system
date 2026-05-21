@@ -22,4 +22,6 @@ recommender_system/scraper
 
 # data cleaning scripts
 restructure_pipeline/
-# research papers
+
+# cheat sheet notes
+notes.ipynb
