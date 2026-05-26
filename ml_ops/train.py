@@ -61,6 +61,7 @@ importance = pd.DataFrame({
 })
 
 importance = importance.sort_values("score")
+print(importance)
 
 plt.barh(
     importance['feature'],
@@ -73,6 +74,7 @@ plt.show()
 # Confustion Matrix
 
 cm = confusion_matrix(y_test, predictions)
+print(cm)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm)
 
 disp.plot()
