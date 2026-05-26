@@ -47,10 +47,7 @@ def load_progress(conn):
 
     return 0
 
-if "progress" not in st.session_state:
-    st.session_state.progress = load_progress()
 
-@st.cache_data
 def load_students():
     with open(dataset_path, "r") as file:
         students = json.loads(file.read())
@@ -74,8 +71,6 @@ def get_db():
     CREATE TABLE IF NOT EXISTS dataset (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id INTEGER,
-        course_id INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
         degree_level TEXT,
         percentage REAL,
@@ -159,6 +154,7 @@ def save_results(
         existing=cursor.fetchone()
 
         if existing:
+            print("Record already exists!!")
             continue
 
         cursor.execute(
@@ -211,7 +207,7 @@ def save_results(
         marks_margin,
 
         skill_relevance_percentage,
-        career_alignment_percentage,
+        career_align_percentage,
 
         label
 
@@ -224,7 +220,7 @@ def save_results(
         ?,?,?,?,?,?,
         ?,?,?,?,?,?,
         ?,?,?,?,?,?,
-        ?,?,?,?,?
+        ?,?,?,?
 
         )
         """,
@@ -308,6 +304,9 @@ def save_results(
 
     conn.commit()
 
+
+if "progress" not in st.session_state:
+    st.session_state.progress = load_progress(conn=get_db())
 
 @st.cache_resource
 def init_engine(corpus):
@@ -479,6 +478,8 @@ if st.session_state.recommendations is not None:
             **Skill Relevance:** 
             {round(course['skill_relevance_percentage'],1)}%
             
+            **required subjects:** {course['required_subjects']}
+
             **Subject Required:** {course['subject_required']}
 
             **Subject Overlap:** 
@@ -517,11 +518,16 @@ if st.session_state.recommendations is not None:
 save_button = st.button("Save to DB")
 
 if save_button:
-    save_results(conn=get_db(), student_id=st.session_state.progress, student=student, recommendations=st.session_state.recommendations)
-    st.session_state.progress += 1
-    st.session_state.recommendations = None
-    st.rerun()
-    st.success("Saved to DB")
+    try:
+        save_results(conn=get_db(), student_id=st.session_state.progress, student=student, recommendations=st.session_state.recommendations)
+        st.success("Saved to DB")
+        st.session_state.progress += 1
+        st.session_state.recommendations = None
+        st.rerun()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print("Error saving to DB: ", str(e))
 
 if st.button("Store Progress"):
     save_progress(conn=get_db(), counter=st.session_state.progress)
