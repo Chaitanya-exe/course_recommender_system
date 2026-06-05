@@ -17,7 +17,7 @@ recommender_system/scraper
 
 # datasets and data files
 *.txt
-*.json
+
 
 
 # data cleaning scripts
