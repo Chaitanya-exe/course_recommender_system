@@ -1,5 +1,5 @@
 [project]
-name = "ML based course recommender system"
+name = "course_recommender_system"
 version = "0.1.0"
 description = "This project is a research based project to compare the performance of different Machine learning models for recommender system, and for that a course recommendation system has been developed."
 readme = "README.md"
