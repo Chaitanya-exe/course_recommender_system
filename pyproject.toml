@@ -1,21 +1,18 @@
 [project]
-name = "hf-models"
+name = "ML based course recommender system"
 version = "0.1.0"
-description = "Add your description here"
+description = "This project is a research based project to compare the performance of different Machine learning models for recommender system, and for that a course recommendation system has been developed."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "beautifulsoup4>=4.14.3",
+
     "langchain-google-genai>=4.2.1",
     "langchain-ollama>=1.0.1",
     "lightgbm>=4.6.0",
     "matplotlib>=3.10.9",
-    "openpyxl>=3.1.5",
     "pandas>=3.0.0",
     "scikit-learn>=1.8.0",
     "streamlit>=1.56.0",
-    "torch>=2.10.0",
-    "torchvision>=0.25.0",
     "websockets>=16.0",
     "xgboost>=3.2.0",
 ]

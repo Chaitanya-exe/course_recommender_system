@@ -18,7 +18,7 @@ recommender_system/scraper
 # datasets and data files
 *.txt
 *.json
-*.db
+
 
 # data cleaning scripts
 restructure_pipeline/
